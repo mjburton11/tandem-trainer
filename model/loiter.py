@@ -4,9 +4,9 @@ from flight_segment import FlightSegment
 
 class Loiter(Model):
     "loiter segment"
-    def setup(self, aircraft, N=5, altitude=15000, latitude=45, percent=90,
-                 day=355):
-        fs = FlightSegment(aircraft, N, altitude, latitude, percent, day)
+    def setup(self, aircraft, N=5, altitude=15000):
+
+        fs = FlightSegment(aircraft, N, altitude)
 
         t = Variable("t", "days", "loitering time")
         constraints = [fs.be["t"] >= t/N]

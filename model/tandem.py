@@ -1,5 +1,7 @@
 " Simple Gas Powered Aircraft Model"
+import numpy as np
 from loiter import Loiter
+from flight_segment import FlightSegment
 from gpkit import Model, Variable
 from gpkitmodels.aircraft.GP_submodels.wing import WingAero
 
@@ -12,7 +14,7 @@ class Aircraft(Model):
         Wstructures = Variable("W_{structures}", "lbf", "structural weight")
         fstructures = Variable("f_{structures}", 0.35, "-",
                                "fractional structural weight")
-        Wpay = Variable("W_{pay}", 10, "lbf", "payload")
+        Wpay = Variable("W_{pay}", 3000, "lbf", "payload")
         Wzfw = Variable("W_{zfw}", "lbf", "zero fuel weight")
 
         constraints = [Wstructures == Wstructures,
@@ -70,14 +72,14 @@ class Mission(Model):
 
         gassimple = Aircraft()
 
-        loiter = Loiter(gassimple)
-        mission = [loiter]
+        fs = FlightSegment(gassimple)
+        mission = [fs]
 
-        mtow = Variable("MTOW", 200, "lbf", "max take off weight")
+        mtow = Variable("MTOW", 5000, "lbf", "max take off weight")
         Wfueltot = Variable("W_{fuel-tot}", "lbf", "total fuel weight")
 
         constraints = [
-            mtow >= loiter["W_{start}"][0],
+            mtow >= mission[0]["W_{start}"][0],
             mtow >= Wfueltot + gassimple["W_{zfw}"],
             Wfueltot >= sum([fs["W_{fuel-fs}"] for fs in mission]),
             mission[-1]["W_{end}"][-1] >= gassimple["W_{zfw}"],
@@ -88,5 +90,5 @@ class Mission(Model):
 
 if __name__ == "__main__":
     M = Mission()
-    M.cost = 1/M["t_Mission, Loiter"]
+    M.cost = 1/np.prod(M["t"])
     sol = M.solve("mosek")
