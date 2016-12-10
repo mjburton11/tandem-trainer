@@ -1,6 +1,6 @@
 " flight segment model "
 from gpkit import Model, Variable, Vectorize
-from gpkitmodels.aircraft.GP_submodels.breguet_endurance import BreguetEndurance
+from breguet_range import BreguetRange
 from steady_level_flight import SteadyLevelFlight
 from flight_state import FlightState
 
@@ -16,12 +16,12 @@ class FlightSegment(Model):
             self.aircraftPerf = self.aircraft.flight_model(self.fs)
             self.slf = SteadyLevelFlight(self.fs, self.aircraft,
                                          self.aircraftPerf)
-            self.be = BreguetEndurance(self.aircraftPerf)
+            self.br = BreguetRange(self.aircraftPerf)
 
-        self.submodels = [self.fs, self.aircraftPerf, self.slf, self.be]
+        self.submodels = [self.fs, self.aircraftPerf, self.slf, self.br]
         Wfuelfs = Variable("W_{fuel-fs}", "lbf", "flight segment fuel weight")
 
-        self.constraints = [Wfuelfs >= self.be["W_{fuel}"].sum()]
+        self.constraints = [Wfuelfs >= self.br["W_{fuel}"].sum()]
 
         if N > 1:
             self.constraints.extend([self.aircraftPerf["W_{end}"][:-1] >=

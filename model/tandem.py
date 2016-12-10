@@ -56,7 +56,7 @@ class AircraftPerf(Model):
         Pshaft = Variable("P_{shaft}", "hp", "shaft power")
         Ptot = Variable("P_{total}", "hp", "shaft power")
         bsfc = Variable("BSFC", 0.6, "lb/hp/hr",
-                        "break specific fuel consumption")
+                        "power specific fuel consumption")
 
         constraints = [CD >= cda0 + self.wing["C_d"],
                        Wstart == Wstart,
@@ -90,5 +90,5 @@ class Mission(Model):
 
 if __name__ == "__main__":
     M = Mission()
-    M.cost = 1/np.prod(M["t"])
+    M.cost = 1/np.prod(M["R"])
     sol = M.solve("mosek")
