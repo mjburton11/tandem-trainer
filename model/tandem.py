@@ -3,6 +3,7 @@ import numpy as np
 from loiter import Loiter
 from flight_segment import FlightSegment
 from gpkit import Model, Variable
+from naca652_aero import NACA652Aero
 from gpkitmodels.aircraft.GP_submodels.wing import WingAero
 
 class Aircraft(Model):
@@ -41,7 +42,7 @@ class Wing(Model):
         return constraints
 
     def flight_model(self, state):
-        return WingAero(self, state)
+        return NACA652Aero(self, state)
 
 class AircraftPerf(Model):
     "aircraft performance"
