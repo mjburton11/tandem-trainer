@@ -13,7 +13,7 @@ class Aircraft(Model):
         self.wing = Wing()
 
         Wstructures = Variable("W_{structures}", "lbf", "structural weight")
-        fstructures = Variable("f_{structures}", 0.35, "-",
+        fstructures = Variable("f_{structures}", 0.65, "-",
                                "fractional structural weight")
         Wpay = Variable("W_{pay}", 3000, "lbf", "payload")
         Wzfw = Variable("W_{zfw}", "lbf", "zero fuel weight")
@@ -76,7 +76,7 @@ class Mission(Model):
         fs = FlightSegment(gassimple)
         mission = [fs]
 
-        mtow = Variable("MTOW", 5000, "lbf", "max take off weight")
+        mtow = Variable("MTOW", 10000, "lbf", "max take off weight")
         Wfueltot = Variable("W_{fuel-tot}", "lbf", "total fuel weight")
 
         constraints = [
