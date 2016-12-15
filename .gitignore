@@ -93,3 +93,7 @@ ENV/
 *.swp
 *.png
 *.jpg
+*.tex
+*.md.py
+*.pyc
+*.tex.md
