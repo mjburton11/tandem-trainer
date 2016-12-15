@@ -77,20 +77,23 @@ class Mission(Model):
         fs = FlightSegment(gassimple)
         mission = [fs]
 
-        mtow = Variable("MTOW", 2000, "lbf", "max take off weight")
+        mtow = Variable("MTOW", "lbf", "max take off weight")
         Wfueltot = Variable("W_{fuel-tot}", "lbf", "total fuel weight")
+        Rmin = Variable("R_{min}", 400, "nautical_miles",
+                        "minimum flight range")
 
         constraints = [
-            mtow >= mission[0]["W_{start}"][0],
+            mtow == mission[0]["W_{start}"][0],
             mtow >= Wfueltot + gassimple["W_{zfw}"],
             Wfueltot >= sum([fs["W_{fuel-fs}"] for fs in mission]),
             mission[-1]["W_{end}"][-1] >= gassimple["W_{zfw}"],
-            gassimple["W_{structures}"] >= mtow*gassimple["f_{structures}"]
+            gassimple["W_{structures}"] >= mtow*gassimple["f_{structures}"],
+            Rmin/5 <= fs["R"]
             ]
 
         return gassimple, mission, constraints
 
 if __name__ == "__main__":
     M = Mission()
-    M.cost = 1/np.prod(M["R"])
+    M.cost = M["MTOW"]
     sol = M.solve("mosek")
