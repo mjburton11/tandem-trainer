@@ -90,3 +90,6 @@ ENV/
 
 *.pol
 *.pdf
+*.swp
+*.png
+*.jpg

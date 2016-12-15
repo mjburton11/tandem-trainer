@@ -10,9 +10,11 @@ class BreguetRange(Model):
         Wfuel = Variable("W_{fuel}", "lbf", "segment-fuel weight")
         g = Variable("g", 9.81, "m/s^2", "gravitational acceleration")
         R = Variable("R", "nautical_miles", "range")
+        rhofuel = Variable("\\rho_{JetA}", 6.75, "lb/gallon",
+                           "Jet A fuel density")
 
         constraints = [
-            TCS([z_bre >= (perf["P_{total}"]*R*perf["BSFC"]*g/perf["V"]
+            TCS([z_bre >= (R*perf["\\dot{m}"]*rhofuel*g/perf["V"]
                            / (perf["W_{end}"]*perf["W_{start}"])**0.5)]),
             Wfuel/perf["W_{end}"] >= te_exp_minus1(z_bre, 3),
             perf["W_{start}"] >= perf["W_{end}"] + Wfuel

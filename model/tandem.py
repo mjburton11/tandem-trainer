@@ -4,6 +4,7 @@ from loiter import Loiter
 from flight_segment import FlightSegment
 from gpkit import Model, Variable
 from naca652_aero import NACA652Aero
+from rotax_912 import Engine
 from gpkitmodels.aircraft.GP_submodels.wing import WingAero
 
 class Aircraft(Model):
@@ -11,11 +12,12 @@ class Aircraft(Model):
     def setup(self):
 
         self.wing = Wing()
+        self.engine = Engine()
 
         Wstructures = Variable("W_{structures}", "lbf", "structural weight")
-        fstructures = Variable("f_{structures}", 0.65, "-",
+        fstructures = Variable("f_{structures}", 0.7, "-",
                                "fractional structural weight")
-        Wpay = Variable("W_{pay}", 3000, "lbf", "payload")
+        Wpay = Variable("W_{pay}", 500, "lbf", "payload")
         Wzfw = Variable("W_{zfw}", "lbf", "zero fuel weight")
 
         constraints = [Wstructures == Wstructures,
@@ -49,23 +51,22 @@ class AircraftPerf(Model):
     def setup(self, static, state):
 
         self.wing = static.wing.flight_model(state)
+        self.engine = static.engine.flight_model(state)
+        dynamic = [self.wing, self.engine]
 
         CD = Variable("C_D", "-", "aircraft drag coefficient")
         cda0 = Variable("CDA_0", 0.005, "-", "non-wing drag coefficient")
         Wstart = Variable("W_{start}", "lbf", "vector-begin weight")
         Wend = Variable("W_{end}", "lbf", "vector-end weight")
-        Pshaft = Variable("P_{shaft}", "hp", "shaft power")
-        Ptot = Variable("P_{total}", "hp", "shaft power")
-        bsfc = Variable("BSFC", 0.6, "lb/hp/hr",
-                        "power specific fuel consumption")
+        etaprop = Variable("\\eta_{prop}", 0.7, "-", "propulsive efficiency")
 
         constraints = [CD >= cda0 + self.wing["C_d"],
                        Wstart == Wstart,
                        Wend == Wend,
-                       Ptot >= Pshaft,
-                       bsfc == bsfc]
+                       etaprop == etaprop
+                      ]
 
-        return self.wing, constraints
+        return constraints, dynamic
 
 class Mission(Model):
     "create a mission for the flight"
@@ -76,7 +77,7 @@ class Mission(Model):
         fs = FlightSegment(gassimple)
         mission = [fs]
 
-        mtow = Variable("MTOW", 10000, "lbf", "max take off weight")
+        mtow = Variable("MTOW", 2000, "lbf", "max take off weight")
         Wfueltot = Variable("W_{fuel-tot}", "lbf", "total fuel weight")
 
         constraints = [
