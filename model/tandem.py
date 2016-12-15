@@ -73,13 +73,14 @@ class Mission(Model):
     def setup(self):
 
         gassimple = Aircraft()
+        N = 5
 
-        fs = FlightSegment(gassimple)
+        fs = FlightSegment(gassimple, N=N)
         mission = [fs]
 
         mtow = Variable("MTOW", "lbf", "max take off weight")
         Wfueltot = Variable("W_{fuel-tot}", "lbf", "total fuel weight")
-        Rmin = Variable("R_{min}", 400, "nautical_miles",
+        Rmin = Variable("R_{min}", 400.0, "nautical_miles",
                         "minimum flight range")
 
         constraints = [
@@ -88,7 +89,7 @@ class Mission(Model):
             Wfueltot >= sum([fs["W_{fuel-fs}"] for fs in mission]),
             mission[-1]["W_{end}"][-1] >= gassimple["W_{zfw}"],
             gassimple["W_{structures}"] >= mtow*gassimple["f_{structures}"],
-            Rmin/5 <= fs["R"]
+            Rmin/N <= fs["R"]
             ]
 
         return gassimple, mission, constraints
