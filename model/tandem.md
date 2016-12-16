@@ -23,6 +23,13 @@ with open("tex/Mission.generated.tex", "w") as f:
             f.writelines(lines)
 
 ```
+# Fits
+
+![Fit of drag polar data from NACA 652-2412 airfoil](naca652_polars/naca652polarfit1.pdf)
+
+![Fit of power to RPM from Rotax 912 engine](engine/powervsrpmfit.pdf)
+![Fit of fuel burn to PRM from Rotax 912 engine](engine/fuelburnvsrpmfit.pdf)
+
 
 # Solution
 
