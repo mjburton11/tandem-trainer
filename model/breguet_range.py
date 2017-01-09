@@ -5,7 +5,7 @@ from gpkit.constraints.tight import Tight as TCS
 
 class BreguetRange(Model):
     "breguet endurance model"
-    def setup(self, perf):
+    def setup(self, Wstart, Wend, perf):
         z_bre = Variable("z_{bre}", "-", "Breguet coefficient")
         Wfuel = Variable("W_{fuel}", "lbf", "segment-fuel weight")
         g = Variable("g", 9.81, "m/s^2", "gravitational acceleration")
@@ -15,9 +15,9 @@ class BreguetRange(Model):
 
         constraints = [
             TCS([z_bre >= (R*perf["\\dot{m}"]*rhofuel*g/perf["V"]
-                           / (perf["W_{end}"]*perf["W_{start}"])**0.5)]),
-            Wfuel/perf["W_{end}"] >= te_exp_minus1(z_bre, 3),
-            perf["W_{start}"] >= perf["W_{end}"] + Wfuel
+                           / (Wend*Wstart)**0.5)]),
+            Wfuel/Wend >= te_exp_minus1(z_bre, 3),
+            Wstart >= Wend + Wfuel
             ]
 
         return constraints

@@ -43,17 +43,23 @@ def plot_sweep(model, xvarname, xsweep, yvarnames=None, ylim=None, fig=None, axi
 
     if model.varkeys[xvarname].__len__() > 1:
         oldsub = [vk.value for vk in model.varkeys[xvarname]]
-        for yvarname, ax in zip(yvarnames, axis):
-            ys = []
-            for x in xsweep:
-                for vk in model.varkeys[xvarname]:
-                    model.substitutions.update({vk: x})
-                try:
-                    sol = model.solve("mosek")
-                    ys.append(sol(yvarname).magnitude)
-                except RuntimeWarning:
-                    ys.append(np.nan)
-            ax.plot(xsweep, ys)
+        ys = np.zeros([len(yvarnames), len(xsweep)])
+        for j, x in enumerate(xsweep):
+            for vk in model.varkeys[xvarname]:
+                model.substitutions.update({vk: x})
+            try:
+                sol = model.solve("mosek")
+                for i, yvarname in enumerate(yvarnames):
+                    if hasattr(sol(yvarname), "magnitude"):
+                        ys[i, j] = sol(yvarname).magnitude
+                    else:
+                        ys[i, j] = sol(yvarname)
+            except RuntimeWarning:
+                for j, yvarname in enumerate(yvarnames):
+                    ys[i, j] = np.nan
+
+        for y, yvarname, ax in zip(ys, yvarnames, axis):
+            ax.plot(xsweep, y)
             ax.set_ylabel("%s [%s]" % (model[yvarname].descr["label"],
                                        unitstr(model[yvarname].units)))
             ax.set_xlabel("%s [%s]" % (vk.descr["label"], unitstr(vk.units)))
@@ -91,7 +97,7 @@ def plot_sweep(model, xvarname, xsweep, yvarnames=None, ylim=None, fig=None, axi
             if ylim:
                 ax.set_ylim((ylim[0], ylim[1]))
 
-            plt.grid()
+            ax.grid()
 
         model.substitutions.update({xvarname: oldsub})
 

@@ -5,7 +5,8 @@ from flight_segment import FlightSegment
 from gpkit import Model, Variable
 from naca652_aero import NACA652Aero
 from rotax_912 import Engine
-from gpkitmodels.aircraft.GP_submodels.wing import WingAero
+from wing import Wing
+from gpkitmodels.helpers import summing_vars
 
 class Aircraft(Model):
     "vehicle"
@@ -13,38 +14,42 @@ class Aircraft(Model):
 
         self.wing = Wing()
         self.engine = Engine()
+        self.fuselage = Fuselage()
 
-        Wstructures = Variable("W_{structures}", "lbf", "structural weight")
-        fstructures = Variable("f_{structures}", 0.7, "-",
-                               "fractional structural weight")
-        Wpay = Variable("W_{pay}", 500, "lbf", "payload")
+        self.components = [self.wing, self.engine, self.fuselage]
+
+        Wpay = Variable("W_{pay}", 700, "lbf", "payload")
         Wzfw = Variable("W_{zfw}", "lbf", "zero fuel weight")
 
-        constraints = [Wstructures == Wstructures,
-                       fstructures == fstructures,
-                       Wzfw >= Wstructures + Wpay]
+        constraints = [Wzfw >= sum(summing_vars(self.components, "W")) + Wpay]
 
-        return self.wing, constraints
+        return self.components, constraints
 
     def flight_model(self, state):
         return AircraftPerf(self, state)
 
-class Wing(Model):
-    "wing model"
+    def loading(self, Wcent):
+        return AircraftLoading(self, Wcent)
+
+class Fuselage(Model):
+    "fuselage weight"
     def setup(self):
 
-        S = Variable("S", "ft**2", "planform area")
-        b = Variable("b", "ft", "wing span")
-        cmac = Variable("c_{MAC}", "ft", "mean aerodynamic chord")
-        AR = Variable("AR", 27, "-", "aspect ratio")
+        W = Variable("W", "lbf", "fuselage weight")
+        f = Variable("f", 0.3, "-", "fraction of total weight")
 
-        constraints = [b**2 == S*AR,
-                       cmac == S/b]
+        constraints = [W == W,
+                       f == f]
 
         return constraints
 
-    def flight_model(self, state):
-        return NACA652Aero(self, state)
+class AircraftLoading(Model):
+    "aircraft loading model"
+    def setup(self, aircraft, Wcent):
+
+        loading = [aircraft.wing.loading(Wcent)]
+
+        return loading
 
 class AircraftPerf(Model):
     "aircraft performance"
@@ -55,14 +60,10 @@ class AircraftPerf(Model):
         dynamic = [self.wing, self.engine]
 
         CD = Variable("C_D", "-", "aircraft drag coefficient")
-        cda0 = Variable("CDA_0", 0.005, "-", "non-wing drag coefficient")
-        Wstart = Variable("W_{start}", "lbf", "vector-begin weight")
-        Wend = Variable("W_{end}", "lbf", "vector-end weight")
+        cda0 = Variable("CDA_0", 0.025, "-", "non-wing drag coefficient")
         etaprop = Variable("\\eta_{prop}", 0.7, "-", "propulsive efficiency")
 
         constraints = [CD >= cda0 + self.wing["C_d"],
-                       Wstart == Wstart,
-                       Wend == Wend,
                        etaprop == etaprop
                       ]
 
@@ -72,27 +73,31 @@ class Mission(Model):
     "create a mission for the flight"
     def setup(self):
 
-        gassimple = Aircraft()
-        N = 5
-
-        fs = FlightSegment(gassimple, N=N)
-        mission = [fs]
-
         mtow = Variable("MTOW", "lbf", "max take off weight")
         Wfueltot = Variable("W_{fuel-tot}", "lbf", "total fuel weight")
         Rmin = Variable("R_{min}", 400.0, "nautical_miles",
                         "minimum flight range")
+        Wcent = Variable("W_{cent}", "lbf", "aircraft center weight")
+
+        tandem = Aircraft()
+
+        N = 5
+        fs = FlightSegment(tandem, N=N)
+        self.mission = [fs]
+
+        loading = AircraftLoading(tandem, Wcent)
 
         constraints = [
-            mtow == mission[0]["W_{start}"][0],
-            mtow >= Wfueltot + gassimple["W_{zfw}"],
-            Wfueltot >= sum([fs["W_{fuel-fs}"] for fs in mission]),
-            mission[-1]["W_{end}"][-1] >= gassimple["W_{zfw}"],
-            gassimple["W_{structures}"] >= mtow*gassimple["f_{structures}"],
-            Rmin/N <= fs["R"]
+            mtow == self.mission[0]["W_{start}"][0],
+            mtow >= Wfueltot + tandem["W_{zfw}"],
+            Wfueltot >= sum([fs["W_{fuel-fs}"] for fs in self.mission]),
+            self.mission[-1]["W_{end}"][-1] >= tandem["W_{zfw}"],
+            Wcent >= tandem.engine["W"] + tandem["W_{pay}"] + Wfueltot,
+            Rmin/N <= fs["R"],
+            tandem.fuselage["W"] >= mtow*tandem.fuselage["f"]
             ]
 
-        return gassimple, mission, constraints
+        return tandem, self.mission, loading, constraints
 
 if __name__ == "__main__":
     M = Mission()

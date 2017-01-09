@@ -52,20 +52,20 @@ with open("tex/sol.generated.tex", "w") as f:
 ```python
 #inPDF: skip
 from plotting import plot_sweep
-fig, ax = plot_sweep(M, "f_{structures}", np.linspace(0.5, 0.8, 15), ["MTOW"], ylim=[0,3000])
-fig.savefig("mtowvsfstruct.pdf")
+fig, ax = plot_sweep(M, "f", np.linspace(0.1, 0.6, 15), ["MTOW", "b", "AR"])
+fig.savefig("mtowvsffuse.pdf")
 
-fig, ax = plot_sweep(M, "AR", np.linspace(5, 30, 15), ["MTOW"], ylim=[0,3000])
-fig.savefig("mtowvsAR.pdf")
-
-fig, ax = plot_sweep(M, "W_{pay}", np.linspace(300, 800, 15), ["MTOW"], ylim=[0,3000])
+fig, ax = plot_sweep(M, "W_{pay}", np.linspace(300, 800, 15), ["MTOW", "b", "AR"])
 fig.savefig("mtowvswpay.pdf")
 
-fig, ax = plot_sweep(M, "CDA_0", np.linspace(0.001, 0.05, 15), ["MTOW"], ylim=[0,3000])
+fig, ax = plot_sweep(M, "CDA_0", np.linspace(0.001, 0.05, 15), ["MTOW", "b", "AR"])
 fig.savefig("mtowvscd0.pdf")
+
+fig, ax = plot_sweep(M, "m_{fac}", np.linspace(1.0, 2, 15), ["MTOW", "b", "AR"])
+fig.savefig("mtowvsmfac.pdf")
 ```
 
-![Max take off weight vs structural fraction](mtowvsfstruct.pdf)
-![Max take off weight vs aspect ratio](mtowvsAR.pdf)
-![Max take off weight vs payload weight](mtowvswpay.pdf)
-![Max take off weight vs non wing drag coefficient](mtowvscd0.pdf)
+![Variation with fuselage weight fraction](mtowvsffuse.pdf)
+![Variation with payload weiht](mtowvswpay.pdf)
+![Variation with non wing drag](mtowvscd0.pdf)
+![Variation with wing weight margin factor](mtowvsmfac.pdf)
