@@ -11,6 +11,9 @@ class FlightSegment(Model):
     def setup(self, aircraft, N=5, altitude=15000):
 
         Wfuelfs = Variable("W_{fuel-fs}", "lbf", "flight segment fuel weight")
+        Rmin = Variable("R_{min}", 400.0, "nautical_miles",
+                        "minimum flight range")
+
 
         self.aircraft = aircraft
         with Vectorize(N):
@@ -26,7 +29,8 @@ class FlightSegment(Model):
         self.submodels = [self.fs, self.aircraftPerf, self.slf, self.br]
 
         self.constraints = [Wfuelfs >= self.br["W_{fuel}"].sum(),
-                            W == (Wstart*Wend)**0.5]
+                            W == (Wstart*Wend)**0.5,
+                            Rmin/N <= self.br["R"]]
 
         if N > 1:
             self.constraints.extend([Wend[:-1] >= Wstart[1:]])
